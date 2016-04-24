@@ -31,33 +31,14 @@ public class User implements Serializable {
 	
 	@Column(name = "salt")
 	private String salt;
-	
-    @Column(name = "friends")
-    private String friends = "";
 
 	public User() {
 	}
 	
-	public User(String username, String password, String friends){
+	public User(String username, String password){
 		this.username=username;
 		this.password=password;
-		this.friends=friends;
 	}
-	
-	
-    public void setFriends(String userFriend) {
-    	if(this.username.equals(userFriend)){
-    	} 
-    	else if(this.friends.contains(userFriend)) {    		
-    	}
-    	else {
-    	this.friends = this.friends +userFriend + " ";
-    	}
-    }
-    
-    public String getFriends() {
-    	return this.friends;
-    }
 
 	public void setUsername(String username) {
 		this.username = username;

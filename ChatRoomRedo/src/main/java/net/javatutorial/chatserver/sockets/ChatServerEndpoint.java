@@ -30,7 +30,6 @@ public class ChatServerEndpoint {
 
 	@OnOpen
 	public void onOpen(Session session) {
-		//sessions.add(session);
 		//Expecting a "userID" type message to return and initialise the user.
 	}
 
@@ -77,6 +76,7 @@ public class ChatServerEndpoint {
 		User user = userManager.getUser(username);
 		Long userID = user.getID();
 		client.getUserProperties().put("ID", userID);
+		client.getUserProperties().put("FriendFilter", "Off");
 		sessions.add(client);
 		updateUserList();
 		ChatMessage response = new ChatMessage("Server", "Welcome to the chat room! Add friends to see each other in 'friends only' privacy mode and to send private messages to each other using '@[user] [message]'.", "globalChat");
@@ -86,7 +86,10 @@ public class ChatServerEndpoint {
 	public void globalChat(Session client, ChatMessage message)
 			throws IOException, EncodeException {
 		String messageText = message.getMessage();
-		if(messageText.charAt(0) == '@'){
+		if(messageText.equals("")){
+			//Do nothing
+		}
+		else if(messageText.charAt(0) == '@'){
 			processPrivateMessage(client, message);
 		}
 		else{
@@ -152,23 +155,9 @@ public class ChatServerEndpoint {
 		boolean success = false;
 		String user = message.getUsername();
 		String friend = message.getMessage();
-		
-		/*Long userID = (Long) client.getUserProperties().get("ID");
-		Long friendID = userManager.getUser(friend).getID();
-		
-		try{
-			success = userManager.addFriend(userID, friendID);
-		}
-		catch(NullPointerException e){
-			System.out.println("Couldn't find EJB");
-		}*/
-		
 		User userInstance = userManager.getUser(user);
 		User friendInstance = userManager.getUser(friend);
-		
-		Long userID = userInstance.getID();
-		Long friendID = friendInstance.getID();
-		
+
 		try{
 			success = userManager.addFriend(userInstance, friendInstance);
 		}
@@ -182,6 +171,8 @@ public class ChatServerEndpoint {
 			message.setMessage(message.getMessage()+" has been sent a friend request.");
 			//Notify the other person if they are online.
 			ChatMessage response = null;
+			Long userID = userInstance.getID();
+			Long friendID = friendInstance.getID();
 			if(userManager.isFriend(friendID, userID)){
 				if(userManager.isFriend(userID,friendID)){
 					message = new ChatMessage("Server", "You are now friends with "+user+"." ,"globalChat");
@@ -251,6 +242,7 @@ public class ChatServerEndpoint {
 			message.setUsername("Server");
 			message.setMessage(userList);
 			message.setType("userList");
+			client.getUserProperties().put("FriendFilter", "On");
 			client.getBasicRemote().sendObject(message);
 		}
 		else{
@@ -263,6 +255,7 @@ public class ChatServerEndpoint {
 			message.setUsername("Server");
 			message.setMessage(userList);
 			message.setType("userList");
+			client.getUserProperties().put("FriendFilter", "Off");
 			client.getBasicRemote().sendObject(message);
 		}
 	}
@@ -273,22 +266,37 @@ public class ChatServerEndpoint {
 		for(Session session : sessions){
 			Long userID = (Long) session.getUserProperties().get("ID");
 			String userList = "";
-			for(Session otherSession : sessions){
-				String otherUser = "" + otherSession.getUserProperties().get("Username");
-				Long otherUserID = (Long) otherSession.getUserProperties().get("ID");
-				if(otherSession.getUserProperties().get("Privacy").equals("All")){
-					userList+=otherUser+" ";
-				}
-				if(otherSession.getUserProperties().get("Privacy").equals("Friends only")){
-					if(userManager.isFriend(userID, otherUserID) && userManager.isFriend(otherUserID, userID)){
+			if(session.getUserProperties().get("FriendFilter").equals("Off")){
+				for(Session otherSession : sessions){
+					String otherUser = "" + otherSession.getUserProperties().get("Username");
+					Long otherUserID = (Long) otherSession.getUserProperties().get("ID");
+					if(otherSession.getUserProperties().get("Privacy").equals("All")){
 						userList+=otherUser+" ";
 					}
-					//Should see yourself when friends only enabled. But not when invisible.
-					//Or maybe not actually, you can see friends. Use that instead?
-					if(session == otherSession){ 
-						userList+=otherUser+" ";
+					else if(otherSession.getUserProperties().get("Privacy").equals("Friends only")){
+						if(userManager.isFriend(userID, otherUserID) && userManager.isFriend(otherUserID, userID)){
+							userList+=otherUser+" ";
+						}
+						//Should see yourself when friends only enabled. But not when invisible.
+						//Or maybe not actually, you can see friends. Use that instead?
+						if(session == otherSession){ 
+							userList+=otherUser+" ";
+						}
 					}
 				}
+			}
+			else{
+				for(Session otherSession : sessions){
+					String otherUser = "" + otherSession.getUserProperties().get("Username");
+					Long otherUserID = (Long) otherSession.getUserProperties().get("ID");
+					if(otherSession.getUserProperties().get("Privacy").equals("Friends only") || 
+							otherSession.getUserProperties().get("Privacy").equals("All")){
+						if(userManager.isFriend(userID, otherUserID) && userManager.isFriend(otherUserID, userID)){
+							userList+=otherUser+" ";
+						}
+						//Shouldn't see yourself when filtering for friends.
+					}
+				}				
 			}
 			userList = sortList(userList);
 			userList = removeDuplicates(userList);
@@ -315,8 +323,8 @@ public class ChatServerEndpoint {
 	public String removeDuplicates(String userList){
 		String[] splitList = userList.split(" ");
 		Arrays.sort(splitList);
-		for(int i=0; i<splitList.length-1; i++){
-			for(int j=i+1; j<splitList.length; j++){
+		for(int i=0; i<splitList.length; i++){
+			for(int j=i+1; j<splitList.length-1; j++){
 				if(splitList[i].equals(splitList[j])){
 					splitList[j]="";
 				}
