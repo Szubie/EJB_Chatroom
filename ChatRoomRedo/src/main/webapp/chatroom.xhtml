@@ -1,0 +1,169 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html">
+
+<h:head>
+	<title>WebSockets Chat</title>
+	<meta name="author" content="javatutorial.net" />
+	<script type="text/javascript" charset="utf-8" src="js/jquery-1.3.2.js"></script>
+	<link type="text/css" rel="stylesheet" href="css/style.css" />
+	<script type="text/javascript">
+	 //<![CDATA[
+	var ws;
+
+	$(document).ready(
+			function() {
+				ws = new WebSocket("ws://localhost:8080/chatroom/chat");
+				ws.onopen = function(event) {
+					var message = {
+						    "username": $('#username').val(),
+						    "message": "!User"+$('#username').val(),
+						    "type": "userID"
+						}
+					ws.send(JSON.stringify(message));
+				}
+				ws.onmessage = function(event) {
+					var json = JSON.parse(event.data);
+					if(json.type == "globalChat"){
+						var $textarea = $('#messages');
+						$textarea.val($textarea.val() + json.username + ": " + json.message + "\n");
+						$textarea.animate({
+							scrollTop : $textarea.height()
+						}, 1000);
+					}
+					if(json.type == "userList"){
+						var $userarea = $('#userList');
+						var splitMessage = json.message.split(" ");
+						var userList = "";
+						
+						for(i=0; i<splitMessage.length; i++){
+							userList += splitMessage[i] + "\n";
+						}
+						$userarea.val(userList);
+					}
+				}
+				ws.onclose = function(event) {
+					
+				}
+
+			});
+
+	function sendMessage() {
+		var message = {
+			    "username": $('#username').val(),
+			    "message": $('#message').val(),
+			    "type": "globalChat" 
+			}
+		ws.send(JSON.stringify(message));
+		$('#message').val('');
+	}
+
+	function addFriend() {
+		var message = {
+			    "username": $('#username').val(),
+			    "message": $('#friendName').val(),
+			    "type": "addFriend" 
+			}
+		ws.send(JSON.stringify(message));
+		$('#friendName').val('');
+	}
+
+	function checkButtonInput(event){
+		var buttonPressed = event.keyCode;
+		if(buttonPressed == 13){
+			event.preventDefault();
+			sendMessage();
+		}
+	}
+
+	function checkFriendInput(event){
+		var buttonPressed = event.keyCode;
+		if(buttonPressed == 13){
+			event.preventDefault();
+			addFriend();
+		}
+	}
+
+	function updatePrivacy(){
+		var option = document.getElementById('setPrivacy').options[document.getElementById('setPrivacy').options.selectedIndex].text;
+		var message = {
+			    "username": $('#username').val(),
+			    "message": option,
+			    "type": "updatePrivacy" 
+			}
+		ws.send(JSON.stringify(message));
+	}
+
+	function friendFilter(cb){
+		if(cb.checked){
+			var message = {
+				    "username": $('#username').val(),
+				    "message": "true",
+				    "type": "friendFilter" 
+				}
+			ws.send(JSON.stringify(message));			
+		}
+		else{
+			var message = {
+				    "username": $('#username').val(),
+				    "message": "false",
+				    "type": "friendFilter" 
+				}
+			ws.send(JSON.stringify(message));	
+		}
+	}
+	
+	//]]>
+	</script>
+</h:head>
+<h:body>
+	<div id="body">
+		<div id="menu">
+			<p class="welcome">
+				User: <input id="username" value="${styles}" readonly="readonly"/> 
+			</p>
+			<div style="clear: both"></div>
+		</div>
+
+		<div id="chatbox">
+			<textarea id="messages" rows="16" cols="50" readonly="readonly"></textarea>
+		</div>
+
+		<form name="message" action="">
+			<input name="usermsg" type="text" id="message" size="63" onkeypress="checkButtonInput(event);" autocomplete="off"/> 
+			<input type="button" name="submitmsg" value="Send..." onclick="sendMessage();"/>
+		</form>
+		
+		<br></br>
+		
+		Users Currently Online:
+		<div id="userListBox">
+			<textarea id="userList" rows="16" cols="16" readonly="readonly"></textarea>
+			<label for="cb"> Friends only </label>
+			<input id="cb" type="checkbox" onchange="friendFilter(this);" />
+		</div>
+		
+		<br></br>
+		Add Friends:
+		<div id="friendInput">
+			<form name="friendAdd" action="">
+				<input name="friendText" type="text" id="friendName" size="16" onkeypress="checkFriendInput(event);"/> 
+				<input type="button" name="addFriendButton" value="Add" onclick="addFriend();" 	/>
+			</form>
+		</div>
+		
+		Visibility:
+		<div id="privacy">
+			<form name="privacySettings" action="">
+				<select id="setPrivacy">
+  					  <option value="All">All</option>
+					  <option value="Friends only">Friends only</option>
+					  <option value="Invisible">Invisible</option>
+				</select>
+				<input type="button" name="setPrivacyButton" value="Set" onclick="updatePrivacy();" />
+			</form>
+		</div>
+	</div>                     
+</h:body>
+</html>

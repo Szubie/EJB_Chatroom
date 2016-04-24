@@ -1,0 +1,73 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html">
+	<h:head>
+		<title>Login</title>
+		<script type="text/javascript" charset="utf-8" src="js/jquery-1.3.2.js"></script>
+		<link type="text/css" rel="stylesheet" href="ChatDisplayStyle.css" />
+		<script type="text/javascript">
+
+		  var submitting = false;
+
+		  function checkForm(form)
+		  {
+		    if(form.Username.value == "") {
+		      alert("Please enter your username and password");
+		      form.Username.focus();
+		      return false;
+		    }
+		    if(form.Password.value == "") {
+		      alert("Please enter your username and password");
+		      form.Password.focus();
+		      return false;
+		    }
+		    return true;
+		  }
+
+		</script>
+		
+	</h:head>
+	<h:body>
+		<div id="body">
+			<form method='post' onsubmit="
+				  if(submitting) {
+				    button.disabled = true;
+				    return false;
+				  }
+				  if(checkForm(this)) {
+				    button.value = 'Submitting form...';
+				    submitting = true;
+				    return true;
+				  }
+				  return false;
+				">
+			
+			<div id="Login">
+				Enter your username:
+				<p class="username">
+					<input name="Username" type="text" id="Username"/> 
+				</p>
+				<div style="clear: both"></div>
+			</div>
+			<div id="Password">
+		    	Enter your password:
+		    	<p class="password">
+					<input name="Password" type="text" id="Password"/> 
+				</p>
+			</div>
+	
+			<div id="Buttons">
+				<input type='submit' name="button" value='Log in'/>
+				<input type='submit' name="button" value='Sign up'/>
+			</div>
+			
+			</form>
+			
+			<br></br>
+			<p class="System messages">
+				${styles}
+			</p>
+		</div>
+	</h:body>
+</html>
