@@ -42,6 +42,9 @@
 						}
 						$userarea.val(userList);
 					}
+					if(json.type == "updateUsername"){
+						$('#username').val(json.message);
+					}
 				}
 				ws.onclose = function(event) {
 					
@@ -64,6 +67,16 @@
 			    "username": $('#username').val(),
 			    "message": $('#friendName').val(),
 			    "type": "addFriend" 
+			}
+		ws.send(JSON.stringify(message));
+		$('#friendName').val('');
+	}
+
+	function removeFriend(){
+		var message = {
+				"username": $('#username').val(),
+				"message": $('#friendName').val(),
+				"type": "removeFriend"
 			}
 		ws.send(JSON.stringify(message));
 		$('#friendName').val('');
@@ -113,6 +126,24 @@
 			ws.send(JSON.stringify(message));	
 		}
 	}
+
+	function updateUsername(){
+		var textbox = document.getElementById("username"); 
+		var message = {
+			    "username": textbox.oldvalue,
+			    "message": textbox.value,
+			    "type": "updateUsername" 
+			}
+		ws.send(JSON.stringify(message));
+	}
+
+	function checkUsernameInput(event){
+		var buttonPressed = event.keyCode;
+		if(buttonPressed == 13){
+			event.preventDefault();
+			updateUsername();
+		}
+	}
 	
 	//]]>
 	</script>
@@ -121,7 +152,9 @@
 	<div id="body">
 		<div id="menu">
 			<p class="welcome">
-				User: <input id="username" value="${styles}" readonly="readonly"/> 
+				User: <input id="username" value="${styles}" onfocus="this.oldvalue = this.value;" 
+				onkeypress="checkUsernameInput(event); this.oldvalue = this.value;"/> 
+				<input type="button" name="updateUsernameButton" value="Change username" onclick="updateUsername();"/>
 			</p>
 			<div style="clear: both"></div>
 		</div>
@@ -150,6 +183,7 @@
 			<form name="friendAdd" action="">
 				<input name="friendText" type="text" id="friendName" size="16" onkeypress="checkFriendInput(event);"/> 
 				<input type="button" name="addFriendButton" value="Add" onclick="addFriend();" 	/>
+				<input type="button" name="removeFriendButton" value="Remove" onclick="removeFriend();" 	/>
 			</form>
 		</div>
 		

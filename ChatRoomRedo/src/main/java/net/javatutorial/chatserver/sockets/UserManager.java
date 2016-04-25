@@ -2,7 +2,7 @@ package net.javatutorial.chatserver.sockets;
 
 import javax.ejb.Stateless;
 
-
+import org.hibernate.Query;
 import org.hibernate.Session;  
 import org.hibernate.SessionFactory;
 import org.hibernate.mapping.List;  
@@ -70,6 +70,32 @@ public class UserManager implements UserManagerInterface {
     	session.close();
     	
     }
+    
+    public boolean updateUsername(String username, String newName){ 	
+
+    	if(newName.equals("")){
+    		return false;
+    	}
+    	Session session = sessionFactory.openSession();
+    	session.beginTransaction();
+    	if(!checkUsernameTaken(newName)){
+			try{
+		    	User user = getUser(username);
+		    	user.setUsername(newName);
+		    	session.merge(user);
+		    	session.getTransaction().commit();
+		    	return true;
+			}
+			catch(Exception e){
+				System.out.println("Failed to change username");
+				return false;
+			}
+			finally{
+				session.close();
+			}
+		}
+    	return false;
+    }
 
     public boolean checkUsernameTaken(String username) {
     	Session session = sessionFactory.openSession();
@@ -81,7 +107,6 @@ public class UserManager implements UserManagerInterface {
     	else{
     		return false;
     	}
-    	
     }
     
     public boolean addFriend(User user, User friend){
@@ -132,6 +157,28 @@ public class UserManager implements UserManagerInterface {
    		else{
    			return false;
    		}
+    }
+    
+    public boolean removeFriend(User user, User friend){
+    	if(user == null || friend == null){
+    		return false;
+    	}
+    	
+    	Long userID = user.getID();
+    	Long friendID = friend.getID();
+		
+		Session session = sessionFactory.openSession();
+		session.beginTransaction();
+		if(isFriend(userID,friendID)){
+			Query query = session.createQuery("delete from UserRelationship r where r.userID = '"+userID+"' and r. friendID = '"+friendID+"'");
+			query.executeUpdate();
+			session.getTransaction().commit();
+			session.close();
+			return true;
+		}
+		session.getTransaction().rollback();
+		session.close();
+		return false;    	
     }
 
 }

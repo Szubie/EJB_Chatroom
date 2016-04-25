@@ -52,11 +52,17 @@ public class ChatServerEndpoint {
 		else if(message.getType().equals("addFriend")){
 			addFriend(client, message);
 		}
+		else if(message.getType().equals("removeFriend")){
+			removeFriend(client, message);
+		}
 		else if(message.getType().equals("updatePrivacy")){
 			updatePrivacy(client, message);
 		}
 		else if(message.getType().equals("friendFilter")){
 			friendFilter(client, message);
+		}
+		else if(message.getType().equals("updateUsername")){
+			updateUsername(client, message);
 		}
 		else{
 			System.out.println("Unknown message type received");
@@ -210,6 +216,44 @@ public class ChatServerEndpoint {
 		updateUserList();
 	}
 	
+	public void removeFriend(Session client, ChatMessage message)
+			throws IOException, EncodeException {
+		boolean success = false;
+		String user = message.getUsername();
+		String friend = message.getMessage();
+		User userInstance = userManager.getUser(user);
+		User friendInstance = userManager.getUser(friend);
+
+		try{
+			success = userManager.removeFriend(userInstance, friendInstance);
+		}
+		catch(NullPointerException e){
+			System.out.println("Couldn't find EJB");
+		}
+		
+		if(success){
+			message.setType("globalChat");
+			message.setUsername("Server");
+			message.setMessage(message.getMessage()+" has been removed from your friends list.");
+			for(Session session : sessions){
+				if(session.getUserProperties().get("Username").equals(user)){
+					session.getBasicRemote().sendObject(message);
+				}
+			}
+		}
+		else{
+			message.setType("globalChat");
+			message.setUsername("Server");
+			message.setMessage(message.getMessage()+" could not be removed from your friends list.");
+			for(Session session : sessions){
+				if(session.getUserProperties().get("Username").equals(user)){
+					session.getBasicRemote().sendObject(message);
+				}
+			}
+		}
+		updateUserList();		
+	}
+	
 	public void updatePrivacy(Session client, ChatMessage message)
 			throws IOException, EncodeException {
 		String setting = message.getMessage();
@@ -324,7 +368,7 @@ public class ChatServerEndpoint {
 		String[] splitList = userList.split(" ");
 		Arrays.sort(splitList);
 		for(int i=0; i<splitList.length; i++){
-			for(int j=i+1; j<splitList.length-1; j++){
+			for(int j=i+1; j<splitList.length; j++){
 				if(splitList[i].equals(splitList[j])){
 					splitList[j]="";
 				}
@@ -337,5 +381,33 @@ public class ChatServerEndpoint {
 			}
 		}
 		return userList;		
+	}
+	
+	public void updateUsername(Session client, ChatMessage message)
+			throws IOException, EncodeException {
+		String oldUsername = (String) client.getUserProperties().get("Username");
+		String newUsername = message.getMessage();
+		boolean success = false;
+		success = userManager.updateUsername(oldUsername, newUsername);
+		if(success){
+			for(Session session : sessions){
+				if(session.getUserProperties().get("Username").equals(oldUsername)){
+					session.getUserProperties().put("Username", newUsername);
+				}
+			}
+			message.setType("updateUsername");
+			message.setMessage(newUsername);
+			client.getBasicRemote().sendObject(message);
+			ChatMessage response = new ChatMessage("Server", "Updated your username.", "globalChat");
+			client.getBasicRemote().sendObject(response);
+			updateUserList();
+		}
+		else{
+			ChatMessage response = new ChatMessage("Server", "Could not update your username: someone else is using that username.", "globalChat");
+			client.getBasicRemote().sendObject(response);
+			message.setType("updateUsername");
+			message.setMessage(oldUsername);
+			client.getBasicRemote().sendObject(message);
+		}
 	}
 }
