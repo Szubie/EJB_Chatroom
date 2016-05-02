@@ -22,6 +22,14 @@ import net.javatutorial.chatserver.pojos.ChatMessage.MessageEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
+//value = "/chat/{room}"
+
+/*@OnOpen
+public void open(final Session session, @PathParam("room") final String room) {
+	log.info("session openend and bound to room: " + room);
+	session.getUserProperties().put("room", room);
+}*/
+
 @ManagedBean
 @ServerEndpoint(value = "/chat", encoders = { MessageEncoder.class }, decoders = { MessageDecoder.class })
 public class ChatServerEndpoint {
@@ -88,6 +96,7 @@ public class ChatServerEndpoint {
 		String username = message.getUsername();
 		client.getUserProperties().put("Username", username);
 		client.getUserProperties().put("Privacy", "All"); 	//Default to visible to all
+		client.getUserProperties().put("ChatRoom", "Room0"); //Default chat room
 		User user = userManager.getUser(username);
 		Long userID = user.getID();
 		client.getUserProperties().put("ID", userID);
@@ -375,7 +384,6 @@ public class ChatServerEndpoint {
 	
 	public String removeDuplicates(String userList){
 		String[] splitList = userList.split(" ");
-		Arrays.sort(splitList);
 		for(int i=0; i<splitList.length; i++){
 			for(int j=i+1; j<splitList.length; j++){
 				if(splitList[i].equals(splitList[j])){
