@@ -19,6 +19,9 @@ import net.javatutorial.chatserver.pojos.ChatMessage;
 import net.javatutorial.chatserver.pojos.ChatMessage.MessageDecoder;
 import net.javatutorial.chatserver.pojos.ChatMessage.MessageEncoder;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
 @ManagedBean
 @ServerEndpoint(value = "/chat", encoders = { MessageEncoder.class }, decoders = { MessageDecoder.class })
 public class ChatServerEndpoint {
@@ -43,6 +46,12 @@ public class ChatServerEndpoint {
 	@OnMessage
 	public void onMessage(ChatMessage message, Session client)
 			throws IOException, EncodeException {
+		
+        Calendar cal = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+        String timestamp = sdf.format(cal.getTime());
+        message.setTimestamp(timestamp);
+        
 		if(message.getType().equals("userID")){
 			initialiseUser(client, message);
 		}
@@ -91,7 +100,7 @@ public class ChatServerEndpoint {
 	
 	public void globalChat(Session client, ChatMessage message)
 			throws IOException, EncodeException {
-		String messageText = message.getMessage();
+		String messageText = message.getMessage();		
 		if(messageText.equals("")){
 			//Do nothing
 		}
@@ -128,7 +137,7 @@ public class ChatServerEndpoint {
 					session.getBasicRemote().sendObject(message);
 				}
 			}
-			ChatMessage response = new ChatMessage("Server", "You aren't friends with that user, or user does not exist.", "globalChat");
+			ChatMessage response = new ChatMessage("Server", "You aren't friends with that user, or user does not exist.", "globalChat", message.getTimestamp());
 			//client.getBasicRemote().sendObject(response);
 			for (Session session : sessions) {
 				if(session.getUserProperties().get("Username").equals(thisUser)){
@@ -182,14 +191,14 @@ public class ChatServerEndpoint {
 			if(userManager.isFriend(friendID, userID)){
 				if(userManager.isFriend(userID,friendID)){
 					message = new ChatMessage("Server", "You are now friends with "+user+"." ,"globalChat");
-					response = new ChatMessage("Server", "You are now friends with "+user+"." ,"globalChat");
+					response = new ChatMessage("Server", "You are now friends with "+user+"." ,"globalChat", message.getTimestamp());
 				}
 				else{
-					response = new ChatMessage("Server", ""+user+" has accepted your friend request." ,"globalChat");
+					response = new ChatMessage("Server", ""+user+" has accepted your friend request." ,"globalChat", message.getTimestamp());
 				}
 			}
 			else{
-				response = new ChatMessage("Server", ""+user+" has asked to be friends." ,"globalChat");
+				response = new ChatMessage("Server", ""+user+" has asked to be friends." ,"globalChat", message.getTimestamp());
 			}
 			//client.getBasicRemote().sendObject(message);
 			for(Session session : sessions){
@@ -398,12 +407,12 @@ public class ChatServerEndpoint {
 			message.setType("updateUsername");
 			message.setMessage(newUsername);
 			client.getBasicRemote().sendObject(message);
-			ChatMessage response = new ChatMessage("Server", "Updated your username.", "globalChat");
+			ChatMessage response = new ChatMessage("Server", "Updated your username.", "globalChat", message.getTimestamp());
 			client.getBasicRemote().sendObject(response);
 			updateUserList();
 		}
 		else{
-			ChatMessage response = new ChatMessage("Server", "Could not update your username: someone else is using that username.", "globalChat");
+			ChatMessage response = new ChatMessage("Server", "Could not update your username: someone else is using that username.", "globalChat", message.getTimestamp());
 			client.getBasicRemote().sendObject(response);
 			message.setType("updateUsername");
 			message.setMessage(oldUsername);

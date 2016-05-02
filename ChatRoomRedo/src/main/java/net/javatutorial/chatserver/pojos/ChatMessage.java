@@ -25,6 +25,7 @@ public class ChatMessage {
 			return Json.createObjectBuilder()
 					.add("username", message.getUsername())
 					.add("type", message.getType())
+					.add("timestamp", message.getTimestamp())
 					.add("message", message.getMessage()).build().toString();					
 		}
 
@@ -50,6 +51,7 @@ public class ChatMessage {
 			message.setUsername(json.getString("username"));
 			message.setMessage(json.getString("message"));
 			message.setType(json.getString("type"));
+			message.setTimestamp(json.getString("timestamp"));
 
 			return message;
 		}
@@ -67,6 +69,7 @@ public class ChatMessage {
 	private String username;
 	private String message;
 	private String type;
+	private String timestamp;
 
 	public ChatMessage() {
 	}
@@ -82,6 +85,14 @@ public class ChatMessage {
 		this.username = username;
 		this.message = message;
 		this.type = type;
+	}
+	
+	public ChatMessage(String username, String message, String type, String timestamp){
+		super();
+		this.username=username;
+		this.message=message;
+		this.type=type;
+		this.timestamp=timestamp;
 	}
 
 	public String getUsername() {
@@ -106,6 +117,14 @@ public class ChatMessage {
 	
 	public void setType(String type){
 		this.type = type;
+	}
+	
+	public String getTimestamp(){
+		return timestamp;
+	}
+	
+	public void setTimestamp(String timestamp){
+		this.timestamp=timestamp;
 	}
 
 }

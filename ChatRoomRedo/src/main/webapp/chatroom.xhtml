@@ -19,6 +19,7 @@
 					var message = {
 						    "username": $('#username').val(),
 						    "message": "!User"+$('#username').val(),
+							"timestamp": "",
 						    "type": "userID"
 						}
 					ws.send(JSON.stringify(message));
@@ -27,7 +28,7 @@
 					var json = JSON.parse(event.data);
 					if(json.type == "globalChat"){
 						var $textarea = $('#messages');
-						$textarea.val($textarea.val() + json.username + ": " + json.message + "\n");
+						$textarea.val($textarea.val() +"["+ json.timestamp +"] " + json.username + ": " + json.message + "\n");
 						$textarea.animate({
 							scrollTop : $textarea.height()
 						}, 1000);
@@ -56,7 +57,8 @@
 		var message = {
 			    "username": $('#username').val(),
 			    "message": $('#message').val(),
-			    "type": "globalChat" 
+			    "type": "globalChat",
+			    "timestamp": ""
 			}
 		ws.send(JSON.stringify(message));
 		$('#message').val('');
@@ -66,7 +68,8 @@
 		var message = {
 			    "username": $('#username').val(),
 			    "message": $('#friendName').val(),
-			    "type": "addFriend" 
+			    "type": "addFriend",
+			    "timestamp": ""
 			}
 		ws.send(JSON.stringify(message));
 		$('#friendName').val('');
@@ -76,7 +79,8 @@
 		var message = {
 				"username": $('#username').val(),
 				"message": $('#friendName').val(),
-				"type": "removeFriend"
+				"type": "removeFriend",
+				"timestamp": ""
 			}
 		ws.send(JSON.stringify(message));
 		$('#friendName').val('');
@@ -103,7 +107,8 @@
 		var message = {
 			    "username": $('#username').val(),
 			    "message": option,
-			    "type": "updatePrivacy" 
+			    "type": "updatePrivacy",
+			    "timestamp": ""
 			}
 		ws.send(JSON.stringify(message));
 	}
@@ -113,7 +118,8 @@
 			var message = {
 				    "username": $('#username').val(),
 				    "message": "true",
-				    "type": "friendFilter" 
+				    "type": "friendFilter",
+					"timestamp": ""
 				}
 			ws.send(JSON.stringify(message));			
 		}
@@ -121,7 +127,8 @@
 			var message = {
 				    "username": $('#username').val(),
 				    "message": "false",
-				    "type": "friendFilter" 
+				    "type": "friendFilter",
+					"timestamp": ""
 				}
 			ws.send(JSON.stringify(message));	
 		}
@@ -132,7 +139,8 @@
 		var message = {
 			    "username": textbox.oldvalue,
 			    "message": textbox.value,
-			    "type": "updateUsername" 
+			    "type": "updateUsername",
+			    "timestamp": ""
 			}
 		ws.send(JSON.stringify(message));
 	}
